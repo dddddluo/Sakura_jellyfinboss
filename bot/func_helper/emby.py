@@ -297,10 +297,10 @@ class Embyservice:
         end_time = sub_time.strftime("%Y-%m-%d %H:%M:%S")
         sql = ''
         if method == 'sp':
-            sql += "SELECT UserId, SUM(PlayDuration - PauseDuration) AS WatchTime FROM PlaybackActivity "
+            sql += "SELECT UserId, SUM(PlayDuration) AS WatchTime FROM PlaybackActivity "
             sql += f"WHERE DateCreated >= '{start_time}' AND DateCreated < '{end_time}' GROUP BY UserId ORDER BY WatchTime DESC"
         elif user_id != 'None':
-            sql += "SELECT MAX(DateCreated) AS LastLogin,SUM(PlayDuration - PauseDuration) / 60 AS WatchTime FROM PlaybackActivity "
+            sql += "SELECT MAX(DateCreated) AS LastLogin,SUM(PlayDuration) / 60 AS WatchTime FROM PlaybackActivity "
             sql += f"WHERE UserId = '{user_id}' AND DateCreated >= '{start_time}' AND DateCreated < '{end_time}' GROUP BY UserId"
         data = {"CustomQueryString": sql, "ReplaceUserId": True}  # user_name
         # print(sql)
@@ -413,7 +413,7 @@ class Embyservice:
             else:
                 sql += "ItemName AS name, "
             sql += "COUNT(1) AS play_count, "
-            sql += "SUM(PlayDuration - PauseDuration) AS total_duarion "
+            sql += "SUM(PlayDuration) AS total_duarion "
             sql += "FROM PlaybackActivity "
             sql += f"WHERE ItemType = '{types}' "
             sql += f"AND DateCreated >= '{start_time}' AND DateCreated <= '{end_time}' "

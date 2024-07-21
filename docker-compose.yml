@@ -33,8 +33,8 @@ services:
 #      - mysql
 
   sakura_embyboss:
-    image: jingwei520/sakura_embyboss:latest
-    container_name: embyboss
+    image: dddddluo/sakura_jellyfinboss:latest
+    container_name: jellyfinboss
     restart: always
     network_mode: host
     volumes:
