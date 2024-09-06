@@ -62,12 +62,12 @@ def pwd_policy(embyid, stats=False, new=None):
     """
     if new is None:
         policy = {
-            "Id": f"{embyid}",
+            "Id": embyid,
             "ResetPassword": stats,
         }
     else:
         policy = {
-            "Id": f"{embyid}",
+            "Id": embyid,
             "NewPw": f"{new}",
         }
     return policy
@@ -110,43 +110,35 @@ class Embyservice:
         if _open.tem >= _open.all_user:
             return 403
         ex = (datetime.now() + timedelta(days=us))
-        name_data = ({"Name": name})
+        pwd = await pwd_create(8) if stats != 'o' else 5210
+
+        name_data = ({"Name": name, "Password": pwd})
         new_user = r.post(f'{self.url}/emby/Users/New',
                           headers=self.headers,
                           json=name_data)
         if new_user.status_code == 200 or 204:
-            try:
-                id = new_user.json()["Id"]
-                pwd = await pwd_create(8) if stats != 'o' else 5210
-                pwd_data = pwd_policy(id, new=pwd)
-                _pwd = r.post(f'{self.url}/emby/Users/{id}/Password',
-                              headers=self.headers,
-                              json=pwd_data)
-            except:
-                return 100
-            else:
-                policy = create_policy(False, False)
-                _policy = r.post(f'{self.url}/emby/Users/{id}/Policy',
-                                 headers=self.headers,
-                                 json=policy)  # .encode('utf-8')
-                if _policy.status_code == 200 or 204:
-                    if stats == 'y':
-                        sql_update_emby(Emby.tg == tg, embyid=id, name=name, pwd=pwd, pwd2=pwd2, lv='b',
-                                        cr=datetime.now(), ex=ex)
-                    elif stats == 'n':
-                        sql_update_emby(Emby.tg == tg, embyid=id, name=name, pwd=pwd, pwd2=pwd2, lv='b',
-                                        cr=datetime.now(), ex=ex,
-                                        us=0)
-                    elif stats == 'o':
-                        sql_add_emby2(embyid=id, name=name, cr=datetime.now(), ex=ex)
+            policy = create_policy(False, False)
+            _policy = r.post(f'{self.url}/emby/Users/{id}/Policy',
+                                headers=self.headers,
+                                json=policy)  # .encode('utf-8')
+            if _policy.status_code == 200 or 204:
+                if stats == 'y':
+                    sql_update_emby(Emby.tg == tg, embyid=id, name=name, pwd=pwd, pwd2=pwd2, lv='b',
+                                    cr=datetime.now(), ex=ex)
+                elif stats == 'n':
+                    sql_update_emby(Emby.tg == tg, embyid=id, name=name, pwd=pwd, pwd2=pwd2, lv='b',
+                                    cr=datetime.now(), ex=ex,
+                                    us=0)
+                elif stats == 'o':
+                    sql_add_emby2(embyid=id, name=name, cr=datetime.now(), ex=ex)
 
-                    if schedall.check_ex:
-                        ex = ex.strftime("%Y-%m-%d %H:%M:%S")
-                    elif schedall.low_activity:
-                        ex = '__若21天无观看将封禁__'
-                    else:
-                        ex = '__无需保号，放心食用__'
-                    return pwd, ex
+                if schedall.check_ex:
+                    ex = ex.strftime("%Y-%m-%d %H:%M:%S")
+                elif schedall.low_activity:
+                    ex = '__若21天无观看将封禁__'
+                else:
+                    ex = '__无需保号，放心食用__'
+                return pwd, ex
         elif new_user.status_code == 400:
             return 400
 
@@ -183,7 +175,6 @@ class Embyservice:
         _pwd = r.post(f'{self.url}/emby/Users/{id}/Password',
                       headers=self.headers,
                       json=pwd)
-        # print(_pwd.status_code)
         if _pwd.status_code == 200 or 204:
             if new is None:
                 if sql_update_emby(Emby.embyid == id, pwd=None) is True:
