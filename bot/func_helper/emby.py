@@ -117,6 +117,7 @@ class Embyservice:
                           headers=self.headers,
                           json=name_data)
         if new_user.status_code == 200 or 204:
+            id = new_user.json()["Id"]
             policy = create_policy(False, False)
             _policy = r.post(f'{self.url}/emby/Users/{id}/Policy',
                                 headers=self.headers,
