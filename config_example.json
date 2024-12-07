@@ -1,0 +1,94 @@
+{
+  "bot_name": "xxxbot",
+  "bot_token": "5701:AAEvAHzsg30",
+  "owner_api": 73711,
+  "owner_hash": "",
+  "owner": xxxxxxx,
+  "group": [
+    -100xxxxxx
+  ],
+  "main_group": "Aaaaa_su",
+  "chanel": "su_yxfy",
+  "bot_photo": "https://telegra.ph/file/3b6cd2a89b652e72e0d3b.png",
+  "admins": [],
+  "money": "花币",
+  "emby_api": "xxxxx",
+  "emby_url": "http://255.255.255.255:8096",
+  "emby_line": "susuyyds.com",
+  "db_host": "localhost",
+  "db_user": "",
+  "db_pwd": "",
+  "db_name": "",
+  "emby_block": [
+    "nsfw"
+  ],
+  "extra_emby_libs": [
+    "电视"
+  ],
+  "open": {
+    "stat": false,
+    "all_user": 1000,
+    "timing": 0,
+    "tem": 0,
+    "allow_code": true,
+    "checkin": true,
+    "exchange": true,
+    "whitelist": true,
+    "invite": false,
+    "leave_ban": true,
+    "uplays": true,
+    "exchange_cost": 100,
+    "whitelist_cost": 9999,
+    "invite_cost": 1000
+  },
+  "tz_ad": "",
+  "tz_api": "",
+  "tz_id": [
+  ],
+  "ranks": {
+    "logo": "SAKURA",
+    "backdrop": false
+  },
+  "schedall": {
+    "dayrank": true,
+    "weekrank": true,
+    "dayplayrank": false,
+    "weekplayrank": false,
+    "check_ex": true,
+    "low_activity": false,
+    "backup_db": false
+  },
+  "db_is_docker": true,
+  "db_docker_name": "mysql",
+  "db_backup_dir": "./db_backup",
+  "db_backup_maxcount": 7,
+  "w_anti_chanel_ids": [],
+  "proxy": {
+    "scheme": "",
+    "hostname": "",
+    "port": null,
+    "username": "",
+    "password": ""
+  },
+  "moviepilot": {
+    "status": false,
+    "host": null,
+    "username": null,
+    "password": null,
+    "access_token": null,
+    "price": 1
+  },
+  "auto_update": {
+    "status": true,
+    "git_repo": "berry8838/Sakura_embyboss",
+    "commit_sha": null
+  },
+  "api": {
+    "status": true,
+    "http_url": "0.0.0.0",
+    "http_port": 8838,
+    "allow_origins": [
+      "*"
+    ]
+  }
+}
