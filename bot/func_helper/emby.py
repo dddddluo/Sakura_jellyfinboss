@@ -398,7 +398,6 @@ class Embyservice(metaclass=Singleton):
                 "CustomQueryString": sql,
                 "ReplaceUserId": False
             }
-            # print(sql)
             resp = r.post(_url, headers=self.headers, json=data)
             if resp.status_code != 204 and resp.status_code != 200:
                 return False, {'error': "🤕Emby 服务器连接失败!"}
