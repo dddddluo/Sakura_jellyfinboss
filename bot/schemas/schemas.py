@@ -104,12 +104,12 @@ class MP(BaseModel):
     access_token: Optional[str] = None
     price: int = 1
     photo_url: Optional[
-        str] = "https://raw.githubusercontent.com/berry8838/berry8838/main/image_2024-08-19_22-12-39.png"
+        str] = "https://raw.githubusercontent.com/dddddluo/Sakura_jellyfinboss/main/image_2024-08-19_22-12-39.png"
 
 
 class AutoUpdate(BaseModel):
     status: bool = True
-    git_repo: Optional[str] = "berry8838/Sakura_embyboss"  # github仓库名/魔改的请填自己的仓库
+    git_repo: Optional[str] = "dddddluo/Sakura_jellyfinboss"  # github仓库名/魔改的请填自己的仓库
     commit_sha: Optional[str] = None  # 最近一次commit
     up_description: Optional[str] = None  # 更新描述
 
