@@ -144,6 +144,7 @@ class Embyservice(metaclass=Singleton):
         _pwd = r.post(f'{self.url}/emby/Users/{id}/Password',
                       headers=self.headers,
                       json=pwd)
+        # print(_pwd.status_code)
         if _pwd.status_code == 200 or 204:
             if new is None:
                 if sql_update_emby(Emby.embyid == id, pwd=None) is True:
@@ -304,10 +305,14 @@ class Embyservice(metaclass=Singleton):
         except Exception as e:
             LOGGER.error(f'添加收藏失败 {e}')
             return False
-    async def get_favorite_items(self, user_id):
+    async def get_favorite_items(self, user_id, start_index=None, limit=None):
         try:
-            _url = f"{self.url}/emby/Users/{user_id}/Items?Filters=IsFavorite&Recursive=true"
-            resp = r.get(_url, headers=self.headers)
+            url = f"{self.url}/emby/Users/{user_id}/Items?Filters=IsFavorite&Recursive=true&IncludeItemTypes=Movie,Series,Episode,Person"
+            if start_index is not None:
+                url += f"&StartIndex={start_index}"
+            if limit is not None:
+                url += f"&Limit={limit}"
+            resp = r.get(url, headers=self.headers)
             if resp.status_code != 204 and resp.status_code != 200:
                 return False
             return resp.json()
@@ -398,6 +403,7 @@ class Embyservice(metaclass=Singleton):
                 "CustomQueryString": sql,
                 "ReplaceUserId": False
             }
+            # print(sql)
             resp = r.post(_url, headers=self.headers, json=data)
             if resp.status_code != 204 and resp.status_code != 200:
                 return False, {'error': "🤕Emby 服务器连接失败!"}
@@ -410,8 +416,8 @@ class Embyservice(metaclass=Singleton):
 
     # 找出 指定用户播放过的不同ip，设备
     async def get_emby_userip(self, user_id):
-        sql = f"SELECT DISTINCT RemoteAddress,DeviceName, ClientName FROM PlaybackActivity " \
-              f"WHERE RemoteAddress and UserId = '{user_id}'"
+        sql = f"SELECT DeviceName,ClientName, RemoteAddress FROM PlaybackActivity " \
+              f"WHERE UserId = '{user_id}'"
         data = {
             "CustomQueryString": sql,
             "ReplaceUserId": True
@@ -424,24 +430,61 @@ class Embyservice(metaclass=Singleton):
         if len(ret["colums"]) == 0:
             return False, ret["message"]
         return True, ret["results"]
-    async def get_emby_user_devices(self, limit = 10):
+    async def get_emby_user_devices(self, offset=0, limit=20):
         """
-        获取用户的设备数量，并根据设备数排序，返回前10条
-        :return:
+        获取用户的设备数量，并根据设备数排序，支持分页
+        
+        Args:
+            offset: 跳过的记录数
+            limit: 每页记录数，实际获取limit+1条用于判断是否有下一页
+            
+        Returns:
+            (success, result, has_prev, has_next)
+            success: bool 是否成功
+            result: list 用户设备数据
+            has_prev: bool 是否有上一页
+            has_next: bool 是否有下一页
         """
-        sql = f"SELECT UserId, COUNT(DISTINCT DeviceName) AS count FROM PlaybackActivity GROUP BY UserId ORDER BY count DESC LIMIT {limit}"
+        sql = f"""
+            SELECT UserId, 
+                   COUNT(DISTINCT DeviceName || '' || ClientName) AS device_count,
+                   COUNT(DISTINCT RemoteAddress) AS ip_count 
+            FROM PlaybackActivity 
+            GROUP BY UserId 
+            ORDER BY device_count DESC 
+            LIMIT {limit + 1} 
+            OFFSET {offset}
+        """
+        
         data = {
             "CustomQueryString": sql,
             "ReplaceUserId": True
         }
-        _url = f'{self.url}/emby/user_usage_stats/submit_custom_query?api_key={emby_api}'
-        resp = r.post(_url, json=data)
-        if resp.status_code != 204 and resp.status_code != 200:
-            return False, {'error': "🤕Emby 服务器连接失败!"}
-        ret = resp.json()
-        if len(ret["colums"]) == 0:
-            return False, ret["message"]
-        return True, ret["results"]
+        
+        try:
+            _url = f'{self.url}/emby/user_usage_stats/submit_custom_query?api_key={emby_api}'
+            resp = r.post(_url, json=data)
+            if resp.status_code != 204 and resp.status_code != 200:
+                return False, [], False, False
+            
+            ret = resp.json()
+            if len(ret["colums"]) == 0:
+                return False, [], False, False
+            
+            results = ret["results"]
+            
+            # 判断是否有下一页
+            has_next = len(results) > limit
+            if has_next:
+                results = results[:-1]  # 去掉多查的一条
+            
+            # 判断是否有上一页
+            has_prev = offset > 0
+            
+            return True, results, has_prev, has_next
+        except Exception as e:
+            LOGGER.error(f"获取用户设备列表失败: {str(e)}")
+            return False, [], False, False
 
     @staticmethod
     def get_medias_count():
@@ -466,10 +509,10 @@ class Embyservice(metaclass=Singleton):
                 return txt
             else:
                 LOGGER.error(f"Items/Counts 未获取到返回数据")
-                return None
+                return '🤕Emby 服务器返回数据为空!'
         except Exception as e:
             LOGGER.error(f"连接Items/Counts出错：" + str(e))
-            return e
+            return '🤕Emby 服务器连接失败!'
 
     async def get_movies(self, title: str, start: int = 0, limit: int = 5):
         """

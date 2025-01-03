@@ -15,12 +15,12 @@ async def day_ranks(pin_mode=True):
     LOGGER.info("【ranks_task】定时任务 正在推送日榜")
     success, movies = await emby.get_emby_report(types='Movie', days=1)
     if not success:
-        LOGGER.info('【ranks_task】获取Movies数据失败!')
-        movies = []
+        LOGGER.error('【ranks_task】推送日榜失败，获取Movies数据失败!')
+        return
     success, tvs = await emby.get_emby_report(types='Episode', days=1)
     if not success:
-        LOGGER.info('【ranks_task】获取Episode数据失败!')
-        tvs = []
+        LOGGER.error('【ranks_task】推送日榜失败，获取Episode数据失败!')
+        return
     # 绘制海报
     await draw.draw(movies, tvs)
     path = draw.save()

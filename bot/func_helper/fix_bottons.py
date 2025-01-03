@@ -3,7 +3,7 @@ from pykeyboard import InlineKeyboard, InlineButton
 from pyrogram.types import InlineKeyboardMarkup
 from pyromod.helpers import ikb, array_chunk
 from bot import chanel, main_group, bot_name, extra_emby_libs, tz_id, tz_ad, tz_api, _open, sakura_b, \
-    schedall, auto_update, fuxx_pitao, kk_gift_days, mp
+    schedall, auto_update, fuxx_pitao, kk_gift_days, mp, red_envelope
 from bot.func_helper import nezha_res
 from bot.func_helper.emby import emby
 from bot.func_helper.utils import members_info
@@ -47,6 +47,7 @@ def members_ikb(is_admin: bool = False, account: bool = False) -> InlineKeyboard
     if account:
         return ikb([[('🏪 兑换商店', 'storeall'), ('🗑️ 删除账号', 'delme')],
                     [('🎬 显示/隐藏', 'embyblock'), ('⭕ 重置密码', 'reset')],
+                    [('💖 我的收藏', 'my_favorites'),('💠 我的设备', 'my_devices')],
                     [('♻️ 主界面', 'back_start')]])
     else:
         return judge_start_ikb(is_admin, account)
@@ -260,7 +261,34 @@ async def normaluser_page_ikb(total_page: int, current_page: int) -> InlineKeybo
             followUp.append(next)
     keyboard.row(*followUp)
     return keyboard
-
+def devices_page_ikb( has_prev: bool, has_next: bool, page: int) -> InlineKeyboardMarkup:
+    # 构建分页按钮
+    buttons = []
+    if has_prev or has_next:
+        nav_buttons = []
+        if has_prev:
+            nav_buttons.append(('⬅️', f'devices:{page-1}'))
+        nav_buttons.append((f'第 {page} 页', 'none'))
+        if has_next:
+            nav_buttons.append(('➡️', f'devices:{page+1}'))
+        buttons.append(nav_buttons)
+    # 添加返回按钮
+    buttons.append([('🔙 返回', 'manage')])
+    keyboard = ikb(buttons)
+    return keyboard
+async def favorites_page_ikb(total_page: int, current_page: int) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboard()
+    keyboard.paginate(total_page, current_page, 'page_my_favorites:{number}')
+    next = InlineButton('⏭️ 后退+5', f'page_my_favorites:{current_page + 5}')
+    previous = InlineButton('⏮️ 前进-5', f'page_my_favorites:{current_page - 5}')
+    followUp = [InlineButton('🔙 Back', 'members')]
+    if total_page > 5:
+        if current_page - 5 >= 1:
+            followUp.append(previous)
+        if current_page + 5 < total_page:
+            followUp.append(next)
+    keyboard.row(*followUp)
+    return keyboard
 def cr_renew_ikb():
     checkin = '✔️' if _open.checkin else '❌'
     exchange = '✔️' if _open.exchange else '❌'
@@ -284,13 +312,15 @@ def config_preparation() -> InlineKeyboardMarkup:
     leave_ban = '✅' if _open.leave_ban else '❎'
     uplays = '✅' if _open.uplays else '❎'
     fuxx_pt = '✅' if fuxx_pitao else '❎'
+    red_envelope_status = '✅' if red_envelope.status else '❎'
+    allow_private = '✅' if red_envelope.allow_private else '❎'
     keyboard = ikb(
         [[('📄 导出日志', 'log_out'), ('📌 设置探针', 'set_tz')],
          [('💠 emby线路', 'set_line'), ('🎬 显/隐指定库', 'set_block')],
          [(f'{leave_ban} 退群封禁', 'leave_ban'), (f'{uplays} 观影奖励结算', 'set_uplays')],
          [(f'{auto_up} 自动更新bot', 'set_update'), (f'{mp_set} Moviepilot求片', 'set_mp')],
-         [(f'设置赠送资格天数({kk_gift_days}天)', 'set_kk_gift_days'),
-          (f'{fuxx_pt} 皮套人过滤功能', 'set_fuxx_pitao')],
+         [(f'设置赠送资格天数({kk_gift_days}天)', 'set_kk_gift_days'), (f'{fuxx_pt} 皮套人过滤功能', 'set_fuxx_pitao')],
+         [(f'{red_envelope_status} 红包', 'set_red_envelope_status'), (f'{allow_private} 专属红包', 'set_red_envelope_allow_private')],
          [('🔙 返回', 'manage')]])
     return keyboard
 
@@ -378,7 +408,6 @@ def sched_buttons():
     check_ex = '✅' if schedall.check_ex else '❎'
     low_activity = '✅' if schedall.low_activity else '❎'
     backup_db = '✅' if schedall.backup_db else '❎'
-    sync_favorites = '✅' if schedall.sync_favorites else '❎'
     keyboard = InlineKeyboard(row_width=2)
     keyboard.add(InlineButton(f'{dayrank} 播放日榜', f'sched-dayrank'),
                  InlineButton(f'{weekrank} 播放周榜', f'sched-weekrank'),
@@ -386,8 +415,7 @@ def sched_buttons():
                  InlineButton(f'{weekplayrank} 观影周榜', f'sched-weekplayrank'),
                  InlineButton(f'{check_ex} 到期保号', f'sched-check_ex'),
                  InlineButton(f'{low_activity} 活跃保号', f'sched-low_activity'),
-                 InlineButton(f'{backup_db} 自动备份数据库', f'sched-backup_db'),
-                 InlineButton(f'{sync_favorites} 同步用户收藏记录', f'sched-sync_favorites')
+                 InlineButton(f'{backup_db} 自动备份数据库', f'sched-backup_db')
                  )
     keyboard.row(InlineButton(f'🫧 返回', 'manage'))
     return keyboard
