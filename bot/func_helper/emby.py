@@ -314,11 +314,11 @@ class Embyservice(metaclass=Singleton):
                 url += f"&Limit={limit}"
             resp = r.get(url, headers=self.headers)
             if resp.status_code != 204 and resp.status_code != 200:
-                return False
+                return {'Items': []}
             return resp.json()
         except Exception as e:
             LOGGER.error(f'获取收藏失败 {e}')
-            return False
+            return {'Items': []}
 
     async def item_id_namme(self, user_id, item_id):
         try:
@@ -416,7 +416,7 @@ class Embyservice(metaclass=Singleton):
 
     # 找出 指定用户播放过的不同ip，设备
     async def get_emby_userip(self, user_id):
-        sql = f"SELECT DeviceName,ClientName, RemoteAddress FROM PlaybackActivity " \
+        sql = f"SELECT DeviceName,ClientName FROM PlaybackActivity " \
               f"WHERE UserId = '{user_id}'"
         data = {
             "CustomQueryString": sql,
@@ -448,9 +448,7 @@ class Embyservice(metaclass=Singleton):
         sql = f"""
             SELECT UserId, 
                    COUNT(DISTINCT DeviceName || '' || ClientName) AS device_count,
-                   COUNT(DISTINCT RemoteAddress) AS ip_count 
-            FROM PlaybackActivity 
-            GROUP BY UserId 
+            FROM PlaybackActivity             GROUP BY UserId 
             ORDER BY device_count DESC 
             LIMIT {limit + 1} 
             OFFSET {offset}
